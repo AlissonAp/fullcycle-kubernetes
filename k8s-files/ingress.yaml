@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-host
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer : "lets-encrypt-issuer"
+    ingress.kubernetes.io/force-ssl-redirect: "true"
+spec:
+  rules:
+    - host: "ingress.kube.alisson.com.br" # Cadastro precisa ocorrer na tabela de DNS
+      http:
+        paths:
+        - pathType: Prefix
+          path: "/"
+          backend:
+            service:
+              name: goserver-service
+              port: 
+                number: 80
+  tls:
+    - hosts:
+      - "ingress.fullcycle.com.br"
+      secretName: letsencrypt-tls
+
+              

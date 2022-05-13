@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: goserver
+  labels:
+    app: goserver
+spec:
+  selector:
+    matchLabels:
+      app: goserver
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: goserver
+    spec:
+      serviceAccountName: goserver-sa
+      containers:
+        - name: goserver
+          image: "alissonapdev/hello-go:v6.4"
+
+          resources:
+            requests: # Mínimo que a aplicação precisa para rodar (Reservando recursos do cluster para o pod)
+              cpu: 100m # ou 0.1
+              memory: 20Mi
+            limits: # Maximo que aguenta
+              cpu: 500m # ou 0.5
+              memory: 25Mi
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+            periodSeconds: 3
+            failureThreshold: 30
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+            periodSeconds: 3
+            failureThreshold: 1
+            initialDelaySeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+            periodSeconds: 5
+            failureThreshold: 1
+            timeoutSeconds: 1
+            successThreshold: 1
+            initialDelaySeconds: 15
+          envFrom:
+            - configMapRef:
+                name: goserver-env
+            - secretRef:
+                name: goserver-secret
+          volumeMounts:
+            - mountPath: "/go/pvc"
+              name: goserver-volume
+
+      volumes:
+        - name: goserver-volume
+          persistentVolumeClaim:
+            claimName: goserver-pvc
